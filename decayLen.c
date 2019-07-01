@@ -14,7 +14,7 @@ double GetThre(double lowpt, double highpt, double lowy, double highy)
   VertexCompositeTree tree;
   if (!tree.GetTree(inputFile, treeDir)) { std::cout << "Invalid tree!" << std::endl; return 0.0; }
 
-  TH1F *hist1 = new TH1F("hist1", "DecayLength", 1000, -2, 5);
+  TH1F *hist1 = new TH1F("hist1", "DecayLength", 2000, -2, 5);
 
   long int nevents = tree.GetEntries();
   for(Long64_t jentry=0; jentry<nevents; jentry++)
@@ -23,49 +23,38 @@ double GetThre(double lowpt, double highpt, double lowy, double highy)
     
     if (tree.GetEntry(jentry)<0) { std::cout << "Invalid entry!" << std::endl; return 0.0; }
     
-    for(uint iGen=0; iGen<tree.candSize_gen(); iGen++){
-      const auto& pT = tree.pT()[iGen];
-      const auto& p = pT*std::cosh(tree.eta()[iGen]);
-      const auto& decayLen = (tree.V3DDecayLength()[iGen]*tree.V3DCosPointingAngle()[iGen])*(3.0969/p)*10;
+    for(uint iReco=0; iReco<tree.candSize(); iReco++){
+      const auto& pT = tree.pT()[iReco];
+      const auto& p = pT*std::cosh(tree.eta()[iReco]);
+      const auto& decayLen = (tree.V3DDecayLength()[iReco]*tree.V3DCosPointingAngle()[iReco])*(3.0969/p)*10;
       
-      const auto& recoIdx = tree.RecIdx_gen()[iGen];
+      const auto& pD1 = tree.pTD1()[iReco]*std::cosh(tree.EtaD1()[iReco]);
+      const auto& pD2 = tree.pTD2()[iReco]*std::cosh(tree.EtaD2()[iReco]);
+      const bool inMuonAcceptance = (pD1 > 3.5 && fabs(tree.EtaD1()[iReco])<2.4) && (pD2 > 3.5 && fabs(tree.EtaD2()[iReco])<2.4);
+      if (!inMuonAcceptance) continue;
       
-      bool genPassed = true;
-      
-      const auto& pD1_gen = tree.pTD1_gen()[iGen]*std::cosh(tree.EtaD1_gen()[iGen]);
-      const auto& pD2_gen = tree.pTD2_gen()[iGen]*std::cosh(tree.EtaD2_gen()[iGen]);
-      const bool inMuonAcceptance = (pD1_gen > 3.5 && fabs(tree.EtaD1_gen()[iGen])<2.4) && (pD2_gen > 3.5 && fabs(tree.EtaD2_gen()[iGen])<2.4);
-      genPassed = genPassed && inMuonAcceptance;
-      genPassed = genPassed && (recoIdx>=0);
-      
-      if (genPassed){
-        const bool softCand = tree.softCand(recoIdx, "POG");
-        const bool goodEvt = tree.evtSel()[0];
-        const bool trigCand = tree.trigHLT()[0] && tree.trigCand(0, recoIdx);
-        genPassed = genPassed && (softCand && goodEvt && trigCand);
-      }
+      const bool softCand = tree.softCand(recoIdx);
+      const bool goodEvt = tree.evtSel()[0];
+      const bool trigCand = tree.trigHLT()[0] && tree.trigCand(0, recoIdx);
+      if (!softCand || !goodEvt || !trigCand) continue;
 
-      if(genPassed){
-        const bool pT = (tree.pT()[iGen]>lowpt && tree.pT()[iGen]<highpt);
-        const bool y = (abs(tree.y()[iGen])>lowy && abs(tree.y()[iGen])<highy);
-        genPassed = genPassed && (pT && y);
-      }
+      const bool pTRange = (tree.pT()[iReco]>lowpt && tree.pT()[iReco]<=highpt);
+      const bool yRange = (abs(tree.y()[iReco])>lowy && abs(tree.y()[iReco])<=highy);
+      if (!pTRange || !yRange) continue;
       
-      if(genPassed){
-        hist1->Fill(decayLen);
-      }
+      hist1->Fill(decayLen);
     }
   }
 
   Double_t norm = hist1->GetEntries();
   hist1->Scale(1/norm);
 
-  Double_t x[1000], y[1000];
-  Int_t n = 1000;
+  Double_t x[2000], y[2000];
+  Int_t n = 2000;
   Double_t thre = 0;
-  for (Int_t i=0;i<n;i++) {
-    x[i] = -2 + 0.007*i;
-    y[i] = hist1->Integral(0,i);
+  for (Int_t i=1;i<n;i++) {
+    x[i] = -2 + 0.0035*i;
+    y[i] = hist1->Integral(1,i);
     if(y[i]>=0.9){
       thre = x[i];
       break;
@@ -76,10 +65,11 @@ double GetThre(double lowpt, double highpt, double lowy, double highy)
 }
 
 void decayLen(){
-  Double_t x[14] = {6.5,7,8,9,10,11,12,13,15,17,19,21,25,30};
-  Double_t y[13];
-  Int_t n = 13;
+  Double_t xBin[16] = {6.5,7,8,9,10,11,12,13,15,17,19,21,25,30,35,40};
+  Double_t x[15], y[15];
+  Int_t n = 15;
   for(Int_t i=0; i<n; i++){
+    x[i] = (xBin[i+1]+xBin[i])/2.0;
     y[i] = GetThre(x[i], x[i+1], 0, 1.4);
     std::cout<<"point: "<<i<<std::endl;
   }
