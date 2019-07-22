@@ -57,11 +57,11 @@ void GetEff(std::string inputFile1, std::string inputFile2, double pTBin[], int 
       const auto& decayLen = (tree1.V3DDecayLength()[iReco]*tree1.V3DCosPointingAngle()[iReco])*(3.0969/p)*10;
 
       if(muonTrig){
-        if ( !triggerMuonAcceptance(tree1.pTD1_gen()[iGenCand] , tree1.etaD1_gen()[iGenCand]) || !triggerMuonAcceptance(tree1.pTD2_gen()[iGenCand] , tree1.etaD2_gen()[iGenCand])
+        if ( !triggerMuonAcceptance(tree1.pTD1_gen()[iReco] , tree1.EtaD1_gen()[iReco]) || !triggerMuonAcceptance(tree1.pTD2_gen()[iGenCand] , tree1.EtaD2_gen()[iReco]))
             continue;
       }
       else{
-        if ( !muonAcceptance(tree1.pTD1_gen()[iGenCand] , tree1.etaD1_gen()[iGenCand]) || !muonAcceptance(tree1.pTD2_gen()[iGenCand] , tree1.etaD2_gen()[iGenCand]) ) continue;
+        if ( !muonAcceptance(tree1.pTD1_gen()[iReco] , tree1.EtaD1_gen()[iReco]) || !muonAcceptance(tree1.pTD2_gen()[iReco] , tree1.EtaD2_gen()[iReco]) ) continue;
       }
 
       const bool yRange = (abs(tree1.y()[iReco])>y1 && abs(tree1.y()[iReco])<=y2);
@@ -91,11 +91,11 @@ void GetEff(std::string inputFile1, std::string inputFile2, double pTBin[], int 
       const auto& decayLen = (tree2.V3DDecayLength()[iReco]*tree2.V3DCosPointingAngle()[iReco])*(3.0969/p)*10;
 
       if(muonTrig){
-        if ( !triggerMuonAcceptance(tree2.pTD1_gen()[iGenCand] , tree2.etaD1_gen()[iGenCand]) || !triggerMuonAcceptance(tree2.pTD2_gen()[iGenCand] , tree2.etaD2_gen()[iGenCand])
+        if ( !triggerMuonAcceptance(tree2.pTD1_gen()[iReco] , tree2.EtaD1_gen()[iReco]) || !triggerMuonAcceptance(tree2.pTD2_gen()[iReco] , tree2.EtaD2_gen()[iReco]))
                 continue;
       }
       else{
-        if ( !muonAcceptance(tree2.pTD1_gen()[iGenCand] , tree2.etaD1_gen()[iGenCand]) || !muonAcceptance(tree2.pTD2_gen()[iGenCand] , tree2.etaD2_gen()[iGenCand]) ) continue;
+        if ( !muonAcceptance(tree2.pTD1_gen()[iReco] , tree2.EtaD1_gen()[iReco]) || !muonAcceptance(tree2.pTD2_gen()[iReco] , tree2.EtaD2_gen()[iReco]) ) continue;
       }
         
       const bool yRange = (abs(tree2.y()[iReco])>y1 && abs(tree2.y()[iReco])<=y2);
