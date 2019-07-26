@@ -6,6 +6,26 @@
 #include "TEfficiency.h"
 #include <iostream>
 
+bool triggerMuonAcceptance(const double& pt, const double& eta)
+{
+  return ( fabs(eta) < 2.4 &&
+        (    ( fabs(eta) < 1.2 && pt >= 3.3 ) ||
+           (  1.2 <= fabs(eta) && fabs(eta) < 2.1 && pt >= 3.93-1.11*fabs(eta)) ||
+             (  2.1 <= fabs(eta) && fabs(eta) < 2.4 && pt >= 1.3)
+           )
+       );
+}
+
+bool muonAcceptance(const double& pt, const double& eta)
+{
+  return ( fabs(eta) < 2.4 &&
+        (    ( fabs(eta) < 0.8 && pt >= 3.3 ) ||
+           (  0.8 <= fabs(eta) && fabs(eta) < 1.5 && pt >= 5.81-3.14*fabs(eta)) ||
+             (  1.5 <= fabs(eta) && fabs(eta) < 2.4 && pt >= 0.8 && 1.89-0.526*fabs(eta) )
+           )
+       );
+}
+
 double GetThre(double lowpt, double highpt, double lowy, double highy, bool muonTrig, double thr)
 {
   const auto& inputFile = "/storage1/users/wl33/DiMuTrees/pPb2016/Tree/VertexCompositeTree_JPsiToMuMu_pPb-Bst_pPb816Summer16_DiMuMC.root";
