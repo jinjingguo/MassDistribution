@@ -6,7 +6,7 @@
 #include "TEfficiency.h"
 #include <iostream>
 
-double GetThre(double lowpt, double highpt, double lowy, double highy)
+double GetThre(double lowpt, double highpt, double lowy, double highy, bool muonTrig, double thr)
 {
   const auto& inputFile = "/storage1/users/wl33/DiMuTrees/pPb2016/Tree/VertexCompositeTree_JPsiToMuMu_pPb-Bst_pPb816Summer16_DiMuMC.root";
   const auto& treeDir = "dimucontana_mc"; // For MC use dimucontana_mc
@@ -28,10 +28,13 @@ double GetThre(double lowpt, double highpt, double lowy, double highy)
       const auto& p = pT*std::cosh(tree.eta()[iReco]);
       const auto& decayLen = (tree.V3DDecayLength()[iReco]*tree.V3DCosPointingAngle()[iReco])*(3.0969/p)*10;
       
-      const auto& pD1 = tree.pTD1()[iReco]*std::cosh(tree.EtaD1()[iReco]);
-      const auto& pD2 = tree.pTD2()[iReco]*std::cosh(tree.EtaD2()[iReco]);
-      const bool inMuonAcceptance = (pD1 > 3.5 && fabs(tree.EtaD1()[iReco])<2.4) && (pD2 > 3.5 && fabs(tree.EtaD2()[iReco])<2.4);
-      if (!inMuonAcceptance) continue;
+      const auto& pTD1 = tree.pTD1()[iReco];
+      const auto& etaD1 = tree.EtaD1()[iReco];
+      const bool mu1InAccep = (muonTrig ? triggerMuonAcceptance(pTD1, etaD1) : muonAcceptance(pTD1, etaD1));
+      const auto& pTD2 = tree.pTD2()[iReco];
+      const auto& etaD2 = tree.EtaD2()[iReco];
+      const bool mu2InAccep = (muonTrig ? triggerMuonAcceptance(pTD2, etaD2) : muonAcceptance(pTD2, etaD2));
+      if(!mu1InAccep || !mu2InAccep) continue;
       
       const bool softCand = tree.softCand(iReco);
       const bool goodEvt = tree.evtSel()[0];
@@ -55,7 +58,7 @@ double GetThre(double lowpt, double highpt, double lowy, double highy)
   for (Int_t i=1;i<n;i++) {
     x[i] = -2 + 0.0035*i;
     y[i] = hist1->Integral(1,i);
-    if(y[i]>=0.9){
+    if(y[i]>=thr){
       thre = x[i];
       break;
     }
@@ -71,7 +74,7 @@ void decayLen(){
   for(Int_t i=0; i<15; i++){
     if(i==15){break;}
     x[i] = (xBin[i+1]+xBin[i])/2.0;
-    y[i] = GetThre(xBin[i], xBin[i+1], 0, 1.4);
+    y[i] = GetThre(xBin[i], xBin[i+1], 0, 1.4, false, 0.9);
     std::cout<<"point: "<<i<<std::endl;
   }
   
@@ -90,5 +93,5 @@ void decayLen(){
   func->Draw("same");
 
 
-  canvas1->Print("0_1.4_2.png");
+  canvas1->Print("0_1.4_0.9NT.png");
 }
