@@ -1,6 +1,6 @@
 #include "Utilities/Ntuple/VertexCompositeTree.h"
 #include "TF1.h"
-#include "TH1F.h"
+#include "TH1D.h"
 #include "TCanvas.h"
 #include "TGraph.h"
 #include "TEfficiency.h"
@@ -28,58 +28,67 @@ bool muonAcceptance(const double& pt, const double& eta)
 
 double GetThre(double lowpt, double highpt, double lowy, double highy, bool muonTrig, double thr)
 {
-  const auto& inputFile = "/storage1/users/wl33/DiMuTrees/pPb2016/Tree/VertexCompositeTree_JPsiToMuMu_pPb-Bst_pPb816Summer16_DiMuMC.root";
+  std::map<std::string , std::string> inputFile;
+  inputFile["pPb"] = "/storage1/users/wl33/DiMuTrees/pPb2016/Tree/VertexCompositeTree_JPsiToMuMu_pPb-Bst_pPb816Summer16_DiMuMC.root";
+  inputFile["Pbp"] = "/storage1/users/wl33/DiMuTrees/pPb2016/Tree/VertexCompositeTree_JPsiToMuMu_PbP-Bst_pPb816Summer16_DiMuMC.root";
   const auto& treeDir = "dimucontana_mc"; // For MC use dimucontana_mc
 
-  VertexCompositeTree tree;
-  if (!tree.GetTree(inputFile, treeDir)) { std::cout << "Invalid tree!" << std::endl; return 0.0; }
+  TH1D hist("hist", "DecayLength", 6000, -4.0, 8.0);
+  hist.Sumw2();
+  for(const auto& s : inputFile)
+  {
+    VertexCompositeTree tree;
+    if (!tree.GetTree(s.second, treeDir)) { std::cout << "Invalid tree for: " << s.second << "!" << std::endl; return 0.0; }
 
-  TH1F *hist1 = new TH1F("hist1", "DecayLength", 2000, -2, 5);
-
-  long int nevents = tree.GetEntries();
-  for(Long64_t jentry=0; jentry<nevents; jentry++)
-  { 
-    if(!(jentry % 1000000)) std::cout<<"Processed "<<jentry<<" events out of "<<nevents<<std::endl;
+    const auto& nevents = tree.GetEntries();
+    for(Long64_t jentry=0; jentry<nevents; jentry++)
+    { 
+      if(!(jentry % 1000000)) std::cout<<"Processed "<<jentry<<" events out of "<<nevents<<std::endl;
     
-    if (tree.GetEntry(jentry)<0) { std::cout << "Invalid entry!" << std::endl; return 0.0; }
+      if (tree.GetEntry(jentry)<0) { std::cout << "Invalid entry for: " << s.second << "!" << std::endl; return 0.0; }
     
-    for(uint iReco=0; iReco<tree.candSize(); iReco++){
-      const auto& pT = tree.pT()[iReco];
-      const auto& p = pT*std::cosh(tree.eta()[iReco]);
-      const auto& decayLen = (tree.V3DDecayLength()[iReco]*tree.V3DCosPointingAngle()[iReco])*(3.0969/p)*10;
-      
-      const auto& pTD1 = tree.pTD1()[iReco];
-      const auto& etaD1 = tree.EtaD1()[iReco];
-      const bool mu1InAccep = (muonTrig ? triggerMuonAcceptance(pTD1, etaD1) : muonAcceptance(pTD1, etaD1));
-      const auto& pTD2 = tree.pTD2()[iReco];
-      const auto& etaD2 = tree.EtaD2()[iReco];
-      const bool mu2InAccep = (muonTrig ? triggerMuonAcceptance(pTD2, etaD2) : muonAcceptance(pTD2, etaD2));
-      if(!mu1InAccep || !mu2InAccep) continue;
-      
-      const bool softCand = tree.softCand(iReco);
-      const bool goodEvt = tree.evtSel()[0];
-      //const bool trigCand = tree.trigHLT()[0] && tree.trigCand(0, iReco);
-      if (!softCand || !goodEvt) continue;
+      for(uint iReco=0; iReco<tree.candSize(); iReco++)
+      {
+	const auto& rap = (s.first=="pPb" ? 1.0 : -1.0)*tree.y()[iReco];
+	const bool yRange = (fabs(rap)>lowy && fabs(rap)<=highy);
+  	const bool pTRange = (tree.pT()[iReco]>lowpt && tree.pT()[iReco]<=highpt);
+	if(!pTRange || !yRange) continue;
+        
+        const auto& pTD1 = tree.pTD1()[iReco];
+        const auto& etaD1 = (s.first=="pPb" ? 1.0 : -1.0)*tree.EtaD1()[iReco];
+        const bool mu1InAccep = (muonTrig ? triggerMuonAcceptance(pTD1, etaD1) : muonAcceptance(pTD1, etaD1));
+        const auto& pTD2 = tree.pTD2()[iReco];
+        const auto& etaD2 = (s.first=="pPb" ? 1.0 : -1.0)*tree.EtaD2()[iReco];
+        const bool mu2InAccep = (muonTrig ? triggerMuonAcceptance(pTD2, etaD2) : muonAcceptance(pTD2, etaD2));
+        if(!mu1InAccep || !mu2InAccep) continue;
 
-      const bool pTRange = (tree.pT()[iReco]>lowpt && tree.pT()[iReco]<=highpt);
-      const bool yRange = (abs(tree.y()[iReco])>lowy && abs(tree.y()[iReco])<=highy);
-      if (!pTRange || !yRange) continue;
-      
-      hist1->Fill(decayLen);
+        const bool softCand = tree.softCand(iReco);
+        const bool goodEvt = tree.evtSel()[0];
+        const bool trigCand = (muonTrig ? (tree.trigHLT()[0] && tree.trigCand(0, iReco)) : true);
+        if(!softCand || !goodEvt || !trigCand) continue;
+
+	const auto& pT = tree.pT()[iReco];
+	const auto& eta = (s.first=="pPb" ? 1.0 : -1.0)*tree.eta()[iReco];
+        const auto& p = pT*std::cosh(eta);
+        const auto& decayLen = (tree.V3DDecayLength()[iReco]*tree.V3DCosPointingAngle()[iReco])*(3.0969/p)*10.0;
+
+ 	const auto& weight = (s.first=="pPb" ? 110.78 : 62.64)/(110.78 + 62.64);
+        hist.Fill(decayLen, weight);
+      }
     }
   }
 
-  Double_t norm = hist1->GetEntries();
-  hist1->Scale(1/norm);
-
-  Double_t x[2000], y[2000];
-  Int_t n = 2000;
-  Double_t thre = 0;
-  for (Int_t i=1;i<n;i++) {
-    x[i] = -2 + 0.0035*i;
-    y[i] = hist1->Integral(1,i);
-    if(y[i]>=thr){
-      thre = x[i];
+  const auto& norm = hist.Integral();
+  hist.Scale(1.0/norm);
+  double thre = -999.0;
+  for(int i=0; i<hist.GetXaxis()->GetNbins(); i++)
+  {
+    const auto& x = hist.GetBinCenter(i);
+    const auto& y = hist.Integral(0, i);
+    std::cout << x << "  " << y << std::endl;
+    if(y>=thr)
+    {
+      thre = x;
       break;
     }
   }
