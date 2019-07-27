@@ -85,7 +85,6 @@ double GetThre(double lowpt, double highpt, double lowy, double highy, bool muon
   {
     const auto& x = hist.GetBinCenter(i);
     const auto& y = hist.Integral(0, i);
-    std::cout << x << "  " << y << std::endl;
     if(y>=thr)
     {
       thre = x;
