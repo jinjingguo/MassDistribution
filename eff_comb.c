@@ -30,7 +30,7 @@ bool muonAcceptance(const double& pt, const double& eta)
        );
 }
 
-void GetEff(std::string inputFile1, std::string inputFile2, double pTBin[], int size, bool corrEff, bool muonTrig, double y1, double y2, const char* title, const char* outPath1, const char* outPath2, const char* outPath3, const char* outPath4)
+void GetEff(std::string inputFile1, std::string inputFile2, double pTBin[], int size, bool corrEff, bool muonTrig, double y1, double y2, int id, const char* title, const char* outPath1, const char* outPath2, const char* outPath3, const char* outPath4)
 {
   const auto& treeDir = "dimucontana_mc"; // For MC use dimucontana_mc
 
@@ -68,6 +68,7 @@ void GetEff(std::string inputFile1, std::string inputFile2, double pTBin[], int 
         // Check we are in the rapidity bin of interest
         const auto& y_gen = (s=="Pbp" ? -1.0 : 1.0) * tree.y_gen()[iGen];
         if(fabs(y_gen)>y1 && fabs(y_gen)<=y2) continue;
+	if (fabs(tree.PID_gen()[iGen])!=id) continue;
       
         // Check that both generated muons are inside the single muon acceptance kinematic region
         const auto& pTD1_gen = tree.pTD1_gen()[iGen];
@@ -183,10 +184,11 @@ void eff_comb(){
   auto title = "PromptWTJPsi0_1.4";
   double y1 = 0.0;
   double y2 = 1.4;
+  int id = 443;
   auto outPath1 = "./rootFile/PromptWT/JPsi/0_1.4/PromptWTJPsi0_1.4_canvas.root";
   auto outPath2 = "./rootFile/PromptWT/JPsi/0_1.4/PromptWTJPsi0_1.4_eff_pPb.root";
   auto outPath3 = "./rootFile/PromptWT/JPsi/0_1.4/PromptWTJPsi0_1.4_eff_Pbp.root";
   auto outPath4 = "./rootFile/PromptWT/JPsi/0_1.4/PromptWTJPsi0_1.4_eff_comb.root";
-  GetEff(inputFile1, inputFile2, pTBin, size, corrEff, muonTrig, y1, y2, title, outPath1, outPath2, outPath3, outPath4);
+  GetEff(inputFile1, inputFile2, pTBin, size, corrEff, muonTrig, y1, y2, id, title, outPath1, outPath2, outPath3, outPath4);
 }
 
