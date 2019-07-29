@@ -28,7 +28,7 @@ bool muonAcceptance(const double& pt, const double& eta)
        );
 }
 
-void GetAcc(std::string inputFile, double pTBin[], int size, bool corrAcc, bool muonTrig, double y1, double y2, const char* title, const char* outPath1, const char* outPath2)
+void GetAcc(std::string inputFile, double pTBin[], int size, bool corrAcc, bool muonTrig, double y1, double y2, int id, const char* title, const char* outPath1, const char* outPath2)
 {
   const auto& treeDir = "dimuana_mc"; // For MC use dimucontana_mc
 
@@ -60,6 +60,7 @@ void GetAcc(std::string inputFile, double pTBin[], int size, bool corrAcc, bool 
       // Check we are in the rapidity bin of interest
       const auto& y_gen = tree.y_gen()[iGen];
       if(fabs(y_gen)>y1 && fabs(y_gen)<=y2) continue;
+      if (fabs(tree.PID_gen()[iGen])!=id) continue;
       
       // Fill the total histogram
       const auto& pT_gen = tree.pT_gen()[iGen];
@@ -114,8 +115,9 @@ void acc(){
   auto title = "PromptWTJPsi0_1.4";
   double y1 = 0.0;
   double y2 = 1.4;
+  int id = 443;
   auto outPath1 = "./rootFile/PromptWT/JPsi/0_1.4/PromptWTJPsi0_1.4_acc_canvas.root";
   auto outPath2 = "./rootFile/PromptWT/JPsi/0_1.4/PromptWTJPsi0_1.4_acc.root";
-  GetAcc(inputFile, pTBin, size, corrAcc, muonTrig, y1, y2, title, outPath1, outPath2);
+  GetAcc(inputFile, pTBin, size, corrAcc, muonTrig, y1, y2, id, title, outPath1, outPath2);
 }
 
