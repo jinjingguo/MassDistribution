@@ -27,7 +27,7 @@ bool muonAcceptance(const double& pt, const double& eta)
 }
 
 
-void DrawDLEff(bool muonTrig, double pTBin[], int n, const char* title, double lowy, double highy, double a, double b, double c, const char* outfile1, const char* outfile2)
+void DrawDLEff(int id, bool muonTrig, double pTBin[], int n, const char* title, double lowy, double highy, double a, double b, double c, const char* outfile1, const char* outfile2)
 {
     std::map<std::string , std::string> inputFile;
     inputFile["pPb"] = "/storage1/users/wl33/DiMuTrees/pPb2016/Tree/VertexCompositeTree_JPsiToMuMu_pPb-Bst_pPb816Summer16_DiMuMC.root";
@@ -55,6 +55,7 @@ void DrawDLEff(bool muonTrig, double pTBin[], int n, const char* title, double l
                 const auto& rap = (s.first=="pPb" ? 1.0 : -1.0)*tree.y()[iReco];
                 const bool yRange = (fabs(rap)>lowy && fabs(rap)<=highy);
                 if(!yRange) continue;
+                if (fabs(tree.PID_gen()[iReco])!=id) continue;
                 
                 const auto& pTD1 = tree.pTD1()[iReco];
                 const auto& etaD1 = (s.first=="pPb" ? 1.0 : -1.0)*tree.EtaD1()[iReco];
@@ -90,6 +91,7 @@ void DrawDLEff(bool muonTrig, double pTBin[], int n, const char* title, double l
 }
 
 void eff_DL2(){
+    int id = 443;
     bool muonTrig = false;
     double pTBin[] = {6.5, 9.0, 50.0};
     int n = 2;
@@ -101,5 +103,5 @@ void eff_DL2(){
     double c = 0.430967;
     const char* outfile1 = "0_1.4_0.9NT_PromptJPsi.png";
     const char* outfile2 = "0_1.4_0.9NT_PromptJPsi.root";
-    DrawDLEff(muonTrig, pTBin, n, title, lowy, highy, a, b, c, outfile1, outfile2);
+    DrawDLEff(id, muonTrig, pTBin, n, title, lowy, highy, a, b, c, outfile1, outfile2);
 }
